@@ -36,11 +36,11 @@ jobs:
       tar -cvf $AGENT_TEMPDIRECTORY/yarn/yarn.tar ./
     displayName: Install Dependencies
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish dependencies'
+  - task: PublishPipelineArtifact@0
+    displayName: 'Save Dependencies'
     inputs:
-      PathtoPublish: '$(Agent.TempDirectory)/yarn'
-      ArtifactName: yarn
+      artifactName: yarn
+      targetPath: '$(Agent.TempDirectory)/yarn'
 
 
 - job: lint
@@ -51,11 +51,11 @@ jobs:
   steps:
   - checkout: none
 
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download dependencies'
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Dependencies'
     inputs:
       artifactName: yarn
-      downloadPath: '$(Agent.TempDirectory)'
+      targetPath: '$(Agent.TempDirectory)'
 
 
   - script: |
@@ -89,11 +89,11 @@ jobs:
   steps:
   - checkout: none
 
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download dependencies'
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Dependencies'
     inputs:
       artifactName: yarn
-      downloadPath: '$(Agent.TempDirectory)'
+      targetPath: '$(Agent.TempDirectory)'
 
   - script: |
       set -eo pipefail
