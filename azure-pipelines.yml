@@ -55,11 +55,13 @@ jobs:
       targetPath: '$(Agent.TempDirectory)'
 
   - script: |
+      set -eo pipefail
       tar -xvf $AGENT_TEMPDIRECTORY/yarn.tar
+    displayName: Extract Dependencies
 
   - script: |
       set -eo pipefail
-      yarn Lint
+      yarn lint
     displayName: Lint
 
   dependsOn:
@@ -88,6 +90,11 @@ jobs:
     inputs:
       artifactName: yarn
       targetPath: '$(System.DefaultWorkingDirectory)'
+
+  - script: |
+      set -eo pipefail
+      tar -xvf $AGENT_TEMPDIRECTORY/yarn.tar
+    displayName: Extract Dependencies
 
   - script: |
       set -eo pipefail
