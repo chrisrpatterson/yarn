@@ -61,7 +61,7 @@ jobs:
   - install
 
 
-- job: test-pkg-tests-linux
+- job: test_pkg_tests_linux
   pool:
     vmImage: 'Ubuntu 16.04'
 
