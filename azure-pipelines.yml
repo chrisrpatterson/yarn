@@ -31,13 +31,14 @@ jobs:
   - script: |
       set -eo pipefail
       yarn install --frozen-lockfile
+      tar -cvf $AGENT_TEMPDIRECTORY/yarn/yarn.tar ./
     displayName: Install Dependencies
 
   - task: PublishPipelineArtifact@0
     displayName: 'Save Dependencies'
     inputs:
       artifactName: yarn
-      targetPath: '$(System.DefaultWorkingDirectory)'
+      targetPath: '$(Agent.TempDirectory)/yarn'
 
 - job: lint
   container: yarn-dev
@@ -50,7 +51,10 @@ jobs:
     displayName: 'Download Dependencies'
     inputs:
       artifactName: yarn
-      targetPath: '$(System.DefaultWorkingDirectory)'
+      targetPath: '$(Agent.TempDirectory)'
+
+  - script: |
+      tar -xvf $AGENT_TEMPDIRECTORY/yarn.tar
 
   - script: |
       set -eo pipefail
