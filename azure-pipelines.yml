@@ -31,6 +31,7 @@ jobs:
   - script: |
       set -eo pipefail
       yarn install --frozen-lockfile
+      mkdir $AGENT_TEMPDIRECTORY/yarn
       tar -cvf $AGENT_TEMPDIRECTORY/yarn/yarn.tar ./
     displayName: Install Dependencies
 
