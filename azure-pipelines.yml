@@ -1,22 +1,67 @@
+resources:
+  containers:
+    - container: yarn-dev
+      image: yarnpkg/dev:latest
+
 jobs:
 
-- job: Windows
-  pool: 'Hosted VS2017'
+#- job: Windows
+#  pool: 'Hosted VS2017'
+#
+#  variables:
+#    os_name: Windows
+#
+#  strategy:
+#    matrix:
+#      node_8_x:
+#        node_version: 8.x
+#      node_10_x:
+#        node_version: 10.x
+#
+#  steps:
+#  - template: scripts/azure-run-tests.yml
 
-  variables:
-    os_name: Windows
-
-  strategy:
-    matrix:
-      node_8_x:
-        node_version: 8.x
-      node_10_x:
-        node_version: 10.x
+- job: install
+  container: yarn-dev
+  pool:
+    vmImage: 'Ubuntu 16.04'
 
   steps:
-  - template: scripts/azure-run-tests.yml
+  - checkout: self
+  - script: |
+      set -eo pipefail
+      yarn install --frozen-lockfile
+    displayName: Install Dependencies
 
-- job: Linux
+  - task: PublishPipelineArtifact@0
+    displayName: 'Save Dependencies'
+    inputs:
+      artifactName: yarn
+      targetPath: '$(System.DefaultWorkingDirectory)'
+
+- job: lint
+  container: yarn-dev
+  pool:
+    vmImage: 'Ubuntu 16.04'
+
+  steps:
+  - checkout: none
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Dependencies'
+    inputs:
+      artifactName: yarn
+      targetPath: '$(System.DefaultWorkingDirectory)'
+
+  - script: |
+      set -eo pipefail
+      yarn Lint
+    displayName: Lint
+
+  dependsOn:
+  - install
+
+
+- job: test-pkg-tests-linux
   pool:
     vmImage: 'Ubuntu 16.04'
 
@@ -31,21 +76,52 @@ jobs:
         node_version: 10.x
 
   steps:
-  - template: scripts/azure-run-tests.yml
+  - checkout: none
 
-- job: OSX
-  pool:
-    vmImage: 'macOS 10.13'
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Dependencies'
+    inputs:
+      artifactName: yarn
+      targetPath: '$(System.DefaultWorkingDirectory)'
 
-  variables:
-    os_name: OSX
+  - script: |
+      set -eo pipefail
+      yarn build
+    displayName: Build Yarn for testing
 
-  strategy:
-    matrix:
-      node_8_x:
-        node_version: 8.x
-      node_10_x:
-        node_version: 10.x
+  - script: |
+      set -eo pipefail
+      ./bin/yarn --cwd packages/pkg-tests
+    displayName: Install the dependencies for the pkg-tests test suite
 
-  steps:
-  - template: scripts/azure-run-tests.yml
+  - script: |
+      set -eo pipefail
+      ./bin/yarn --cwd packages/pkg-tests jest yarn.test.js --reporters=default --reporters=jest-junit
+    displayName: Tests (pkg-tests testsuite)
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/junit.xml'
+      testRunTitle: $(os_name) Node $(node_version)
+    displayName: 'Publishing the test results'
+    condition: always()
+
+  dependsOn:
+  - install
+
+#- job: OSX
+#  pool:
+#    vmImage: 'macOS 10.13'
+#
+#  variables:
+#    os_name: OSX
+#
+#  strategy:
+#    matrix:
+#      node_8_x:
+#        node_version: 8.x
+#      node_10_x:
+#        node_version: 10.x
+#
+#  steps:
+#  - template: scripts/azure-run-tests.yml
