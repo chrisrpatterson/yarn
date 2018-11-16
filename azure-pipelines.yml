@@ -28,6 +28,7 @@ jobs:
 
   steps:
   - checkout: self
+    fetchDepth: 1
   - script: |
       set -eo pipefail
       yarn install --frozen-lockfile
@@ -35,11 +36,12 @@ jobs:
       tar -cvf $AGENT_TEMPDIRECTORY/yarn/yarn.tar ./
     displayName: Install Dependencies
 
-  - task: PublishPipelineArtifact@0
-    displayName: 'Save Dependencies'
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish dependencies'
     inputs:
-      artifactName: yarn
-      targetPath: '$(Agent.TempDirectory)/yarn'
+      PathtoPublish: '$(Agent.TempDirectory)/yarn'
+      ArtifactName: yarn
+
 
 - job: lint
   container: yarn-dev
@@ -48,16 +50,18 @@ jobs:
 
   steps:
   - checkout: none
-  - task: DownloadPipelineArtifact@0
-    displayName: 'Download Dependencies'
+
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download dependencies'
     inputs:
       artifactName: yarn
-      targetPath: '$(Agent.TempDirectory)'
+      downloadPath: '$(Agent.TempDirectory)'
+
 
   - script: |
       set -eo pipefail
       tar -xvf $AGENT_TEMPDIRECTORY/yarn.tar
-    displayName: Extract Dependencies
+    displayName: Extract dependencies
 
   - script: |
       set -eo pipefail
@@ -85,11 +89,11 @@ jobs:
   steps:
   - checkout: none
 
-  - task: DownloadPipelineArtifact@0
-    displayName: 'Download Dependencies'
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download dependencies'
     inputs:
       artifactName: yarn
-      targetPath: '$(System.DefaultWorkingDirectory)'
+      downloadPath: '$(Agent.TempDirectory)'
 
   - script: |
       set -eo pipefail
